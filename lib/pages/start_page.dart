@@ -133,7 +133,14 @@ class _StartPageState extends State<StartPage> {
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  CircularProgressIndicator(),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(FontAwesomeIcons.fingerprint, size: 60, color: Colors.teal,),
+                      SizedBox(height: 20),
+                      Text("Connecting...", style: TextStyle(fontSize: 16, color: Colors.teal,),),
+                    ],
+                  ),
                   if (loadForever)
                   Positioned(
                     bottom: MediaQuery.of(context).size.height * 0.25,

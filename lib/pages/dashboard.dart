@@ -486,7 +486,35 @@ class _DashboardPageState extends State<DashboardPage> {
                         child: Text("Engine is ${engineState ? "ON" : "OFF"}", style: TextStyle(fontSize: 18, color: engineState ? Colors.white : Colors.teal, fontWeight: FontWeight.bold),),
                       ),
                       onTap: (){
-
+                        showDialog(
+                          context: context,
+                          builder: (context){
+                            return Dialog(
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              child: Padding(
+                                padding: EdgeInsets.all(20),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text("Feature is not available at this time.", textAlign: TextAlign.center, style: TextStyle(fontSize: 18),),
+                                    SizedBox(height: 30),
+                                    Material(
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: BorderSide(color: Colors.teal, width: 2)),
+                                      child: InkWell(
+                                        child: Container(
+                                          height: 50,
+                                          alignment: Alignment.center,
+                                          child: Text("OK", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.teal, ),),
+                                        ),
+                                        onTap: () => Navigator.pop(context),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        );
                       },
                     ),
                   ),
