@@ -23,6 +23,7 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
 
+  IOWebSocketChannel channel;
   GlobalKey<ScaffoldState> _scaffold = GlobalKey<ScaffoldState>();
   String fingerprintId;
   int pageIndex = 0;
@@ -181,7 +182,6 @@ class _DashboardPageState extends State<DashboardPage> {
 
   }
 
-  IOWebSocketChannel channel;
   void streamListener(dynamic d) {
     print("DASHBOARD PAGE");
     print(d);
@@ -434,13 +434,14 @@ class _DashboardPageState extends State<DashboardPage> {
               child: Column(
                 children: [
                   Material(
+                    elevation: isSensorAvailable ? 3 : 0,
                     color: isSensorAvailable ? sensorState ? Colors.orange : Colors.white : Colors.grey.shade400,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: !isSensorAvailable || sensorState ? BorderSide.none : BorderSide(width: 2, color: Colors.orange)),
                     child: InkWell(
                       child: Container(
                         height: 60,
                         alignment: Alignment.center,
-                        child: Text("Sensor is ${ isSensorAvailable ? sensorState ? "Enabled" : "Disabled" : "Unavailable"}", style: TextStyle(fontSize: 18, color: !sensorAvailableRequested ? Colors.black : sensorState ? Colors.white : Colors.orange, fontWeight: FontWeight.bold),),
+                        child: Text("Sensor is ${ isSensorAvailable ? sensorState ? "Enabled" : "Disabled" : "Unavailable"}", style: TextStyle(fontSize: 18, color: isSensorAvailable ? sensorState ? Colors.white : Colors.orange : Colors.grey.shade700, fontWeight: FontWeight.bold),),
                       ),
                       onTap: !isSensorAvailable ? null : (){
                         showStateDialog(
@@ -454,6 +455,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                   SizedBox(height: 15),
                   Material(
+                    elevation: 3,
                     color: switchState ? Colors.indigo : Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: switchState ? BorderSide.none : BorderSide(width: 2, color: Colors.indigo)),
                     child: InkWell(
@@ -474,6 +476,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                   SizedBox(height: 15),
                   Material(
+                    elevation: 3,
                     color: engineState ? Colors.teal : Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: engineState ? BorderSide.none : BorderSide(width: 2, color: Colors.teal)),
                     child: InkWell(
