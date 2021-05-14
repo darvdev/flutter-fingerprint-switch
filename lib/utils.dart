@@ -20,8 +20,9 @@ class Utils {
         return WillPopScope(
           onWillPop: () async => false,
           child: Dialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             child: Padding(
-              padding: EdgeInsets.all(10),
+              padding: EdgeInsets.all(20),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [

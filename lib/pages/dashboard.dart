@@ -282,9 +282,9 @@ class _DashboardPageState extends State<DashboardPage> {
                     alignment: Alignment.centerLeft,
                     child: Row(
                       children: [
-                        Expanded(child: Text("Dashboard", style: TextStyle(fontSize: 16, color: isSensorAvailable ? pageIndex == 0 ? Colors.teal : Colors.black : Colors.grey.shade400, fontWeight: pageIndex == 0 ? FontWeight.bold : FontWeight.normal),)),
+                        Expanded(child: Text("Dashboard", style: TextStyle(fontSize: 16, color: pageIndex == 0 ? Colors.teal : Colors.black, fontWeight: pageIndex == 0 ? FontWeight.bold : FontWeight.normal),)),
                         SizedBox(width: 10),
-                        Icon(FontAwesomeIcons.thLarge, color: isSensorAvailable ? Colors.teal : Colors.grey.shade400, size: 18,),
+                        Icon(FontAwesomeIcons.thLarge, color: Colors.teal, size: 18,),
                       ],
                     ),
                   ),

@@ -27,9 +27,11 @@ class _StartPageState extends State<StartPage> {
   String ip;
   bool login = false;
   bool loading = true;
+  bool ipError = true;
   String error;
   String token;
   String pass = "";
+  TextEditingController ipController = TextEditingController();
 
   Timer timer;
   bool loadForever = false;
@@ -103,14 +105,20 @@ class _StartPageState extends State<StartPage> {
   }
 
   Future<void> setIpAddress({String message}) async {
-    if (ip == null) ip = await Navigator.push(context, MaterialPageRoute(builder: (_) => ConnectPage(message: message)));
-    connect();
+    // if (ip == null) ip = await Navigator.push(context, MaterialPageRoute(builder: (_) => ConnectPage(message: message)));
+    // connect();
   }
 
   void initialize() async {
     prefs = await SharedPreferences.getInstance();
-    ip = prefs.getString("ip");
+    String ip = prefs.getString("ip");
     token = prefs.getString("token");
+
+    // ipController.text = "123123123";
+    if (ip != null) {
+      ipController.text = ip;
+    }
+
     print(ip);
     print(token);
     setIpAddress();
@@ -129,7 +137,7 @@ class _StartPageState extends State<StartPage> {
       child: Scaffold(
         body: SizedBox.expand(
           child: Center(
-            child: loading ? SizedBox.expand(
+            child: !loading ? SizedBox.expand(
               child: Stack(
                 alignment: Alignment.center,
                 children: [
@@ -174,11 +182,35 @@ class _StartPageState extends State<StartPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     SizedBox(height: 10),
-                    Icon(FontAwesomeIcons.rainbow, color: Colors.teal, size: 30,),
+                    Icon(FontAwesomeIcons.fingerprint, color: Colors.teal, size: 80,),
+                    SizedBox(height: 10),
+                    Text("Fingerprint Ignition", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.teal,),),
                     SizedBox(height: 5),
-                    Text("Fingerprint Ignition v1.0", style: TextStyle(fontSize: 16, color: Colors.teal,),),
+                    Text("© VinStudios", style: TextStyle(fontSize: 16),),
                     SizedBox(height: 30,),
-                    Text("AUTHENTICATION", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.grey.shade600),),
+                    TextField(
+                      controller: ipController,
+                      onChanged: (v){
+                        setState(() {
+                          ipError = v.trim().isNotEmpty ?  !Utils.validIpAddress(v) : true;
+                        });
+                        print(ipError);
+                      },
+                      decoration: InputDecoration(
+                          hintText: "Device IP address",
+                          isDense: true,
+                          contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                          prefixIcon: Icon(FontAwesomeIcons.globeAsia, size: 18,),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: ipController.text.isEmpty ? Colors.grey : ipError ? Colors.red : Colors.teal),
+                          ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: ipController.text.isEmpty ? Colors.grey : ipError ? Colors.red : Colors.teal),
+                        ),
+                      ),
+                    ),
                     SizedBox(height: 20),
                     TextField(
                       onChanged: (v) => setState(() => pass = v),

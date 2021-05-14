@@ -29,28 +29,7 @@ class _ConnectPageState extends State<ConnectPage> {
                   padding: EdgeInsets.symmetric(horizontal: 30),
                   child: Column(
                     children: [
-                      Icon(FontAwesomeIcons.fingerprint, color: Colors.teal, size: 80,),
-                      SizedBox(height: 10),
-                      Text("Fingerprint Ignition", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.teal,),),
-                      SizedBox(height: 5),
-                      Text("© VinStudios", style: TextStyle(fontSize: 16),),
-                      SizedBox(height: 30,),
-                      TextField(
-                        onChanged: (v){
-                          setState(() {
-                            ip = v.trim();
-                            ready = ip.isNotEmpty ? Utils.validIpAddress(ip) : false;
-                          });
-                        },
-                        decoration: InputDecoration(
-                          hintText: "Device IP address",
-                          prefixIcon: Icon(FontAwesomeIcons.globeAsia, size: 20,),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: Colors.grey),
-                          )
-                        ),
-                      ),
+
                       if(widget.message != null)
                         Column(
                           children: [
