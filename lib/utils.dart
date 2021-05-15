@@ -27,7 +27,7 @@ class Utils {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text("Reconnect", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),),
-                  SizedBox(height: 20),
+                  SizedBox(height: 10),
                   Text("Please reconnect to device", textAlign: TextAlign.center, style: TextStyle(fontSize: 16),),
                   SizedBox(height: 40),
                   Row(
