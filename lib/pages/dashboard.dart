@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:fingerprint/models/fingerprint_model.dart';
 import 'package:fingerprint/models/sensor_model.dart';
 import 'package:fingerprint/pages/fingerprints_page.dart';
+import 'package:fingerprint/pages/start_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -236,7 +237,10 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget build(BuildContext context) {
 
     return WillPopScope(
-      onWillPop: () async => false,
+      onWillPop: () async{
+        showLogoutDialog();
+        return false;
+      },
       child: Scaffold(
         key: _scaffold,
         backgroundColor: Colors.grey.shade100,
@@ -393,14 +397,16 @@ class _DashboardPageState extends State<DashboardPage> {
                     alignment: Alignment.centerLeft,
                     child: Row(
                       children: [
-                        Expanded(child: Text("Logout", style: TextStyle(fontSize: 18),)),
+                        Expanded(child: Text("Logout", style: TextStyle(fontSize: 16),)),
                         SizedBox(width: 10),
                         Icon(FontAwesomeIcons.signOutAlt, color: Colors.teal, size: 18,),
                       ],
                     ),
                   ),
-                  onTap: (){
+                  onTap: () async {
                     // channel.sink.add("esp=restart");
+                    Navigator.pop(context);
+                    showLogoutDialog();
                   },
                 ),
               ),
@@ -854,4 +860,27 @@ class _DashboardPageState extends State<DashboardPage> {
       },
     );
   }
+
+  void showLogoutDialog() async {
+    dynamic result = await showDialog(
+      context: context,
+      builder: (context){
+        return AlertDialog(
+          content: Text("Do you really want to logout?", style: TextStyle(fontSize: 16),),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: Text("Cancel", style: TextStyle(fontSize: 16)),),
+            TextButton(onPressed: () => Navigator.pop(context, true), child: Text("Logout", style: TextStyle(fontSize: 16)),),
+          ],
+        );
+      },
+    );
+
+    if (result == true) {
+      widget.stream?.cancel();
+      channel.sink.close();
+      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => StartPage(connect: false,)), (route) => false);
+    }
+
+  }
+
 }

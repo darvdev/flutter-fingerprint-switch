@@ -7,12 +7,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import 'package:web_socket_channel/io.dart';
 import '../utils.dart';
-import 'connect_page.dart';
 import 'dashboard.dart';
 
 
 class StartPage extends StatefulWidget {
-  const StartPage({Key key}) : super(key: key);
+  final bool connect;
+  const StartPage({this.connect = true, Key key}) : super(key: key);
 
   @override
   _StartPageState createState() => _StartPageState();
@@ -24,10 +24,11 @@ class _StartPageState extends State<StartPage> {
   StreamSubscription<dynamic> stream;
   IOWebSocketChannel channel;
   static String port = "4848";
-  String ip;
-  bool login = false;
-  bool loading = true;
+  bool logging = false;
+  bool connecting = false;
+  bool connected = false;
   bool ipError = true;
+  bool isObscure = true;
   String error;
   String token;
   String pass = "";
@@ -42,17 +43,26 @@ class _StartPageState extends State<StartPage> {
       if (t.tick >= timeout) {
         t.cancel();
         timer.cancel();
-        setState(() => loadForever = true);
+        setState(() {
+          error = "This is taking too long.\nPlease change device ip and try again.";
+          loadForever = true;
+        });
       }
     });
   }
 
   void connect() async {
+    setState((){
+      error = null;
+      connecting= true;
+    });
+
     stream?.cancel();
-    channel = IOWebSocketChannel.connect('ws://$ip:$port/v1');
+    channel = IOWebSocketChannel.connect('ws://${ipController.text}:$port/v1');
     startTimer(10);
     stream = channel.stream.listen((d) {
       print(d);
+
       try {
         dynamic result = json.decode(d);
         String status = result["status"];
@@ -61,33 +71,55 @@ class _StartPageState extends State<StartPage> {
         // dynamic data = result["data"];
 
         if (status == "success") {
-          if (type == "connect") {
-            if (message == "connected") {
-              timer?.cancel();
-              prefs.setString("ip", ip);
-              setState(() {
-                loading = false;
-              });
-            }
-          } else if (type == "login") {
-            if (message == "success") {
-              prefs.setString("token", token);
-              Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => DashboardPage(channel, stream)));
-            } else {
-              setState(() {
-                error = message;
-                login = false;
-              });
-            }
-          }
-        } else { // status = "error"
 
-          if (login) {
+          switch (type) {
+            case "connect":
+              if (message == "connected") {
+                timer?.cancel();
+                prefs.setString("ip", ipController.text);
+                setState(() {
+                  connecting = false;
+                  connected = true;
+                });
+                if (pass.isNotEmpty) {
+                  token = Uuid().v4();
+                  setState(() => logging = true);
+                  channel.sink.add("login=$pass?$token");
+                }
+              } else {
+                print("Error: message: $message");
+              }
+              break;
+
+            case "login":
+              if (message == "success") {
+                prefs.setString("token", token);
+                Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => DashboardPage(channel, stream)));
+              } else {
+                print("Message: $message");
+                setState(() {
+                  error = message;
+                  logging = false;
+                });
+              }
+              break;
+
+            default:
+              print("Type: ");
+              break;
+          }
+
+        } else {
+
+          print("Status $status");
+
+          if (connecting) {
             setState(() {
               error = message;
-              login = false;
+              connecting = false;
             });
           }
+
         }
 
       } catch (e) {
@@ -95,18 +127,25 @@ class _StartPageState extends State<StartPage> {
       }
 
     }, onDone: (){
+      stream?.cancel();
       print("Stream done!");
-      Utils.showReconnectDialog(context);
-    }, onError: (error) async {
-      print(error.toString());
-      ip = null;
-      setIpAddress(message: error.toString());
-    });
-  }
+      setState(() {
+        error = "Device ip address is not available";
+        connecting = false;
+        logging = false;
+        loadForever = false;
+      });
 
-  Future<void> setIpAddress({String message}) async {
-    // if (ip == null) ip = await Navigator.push(context, MaterialPageRoute(builder: (_) => ConnectPage(message: message)));
-    // connect();
+    }, onError: (e) async {
+      stream?.cancel();
+      print(e.toString());
+      setState(() {
+        error = e.toString();
+        connecting = false;
+        logging = false;
+        loadForever = false;
+      });
+    });
   }
 
   void initialize() async {
@@ -114,14 +153,17 @@ class _StartPageState extends State<StartPage> {
     String ip = prefs.getString("ip");
     token = prefs.getString("token");
 
-    // ipController.text = "123123123";
     if (ip != null) {
       ipController.text = ip;
+      setState(() => ipError = !Utils.validIpAddress(ipController.text));
+      if (widget.connect && !ipError) {
+        connect();
+      }
     }
 
     print(ip);
     print(token);
-    setIpAddress();
+
   }
 
   @override
@@ -137,45 +179,7 @@ class _StartPageState extends State<StartPage> {
       child: Scaffold(
         body: SizedBox.expand(
           child: Center(
-            child: !loading ? SizedBox.expand(
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(FontAwesomeIcons.fingerprint, size: 60, color: Colors.teal,),
-                      SizedBox(height: 20),
-                      Text("Connecting...", style: TextStyle(fontSize: 16, color: Colors.teal,),),
-                    ],
-                  ),
-                  if (loadForever)
-                  Positioned(
-                    bottom: MediaQuery.of(context).size.height * 0.25,
-                    child: Material(
-                      color: Colors.teal,
-                      borderRadius: BorderRadius.circular(8),
-                      child: InkWell(
-                        child: Container(
-                          height: 45,
-                          width: 130,
-                          alignment: Alignment.center,
-                          child: Text("STOP", style: TextStyle(color: Colors.white, fontSize: 18),),
-                        ),
-                        onTap: () {
-                          setState((){
-                            loadForever = false;
-                            ip = null;
-                          });
-                          setIpAddress();
-                        },
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ) :
-            Padding(
+            child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 40),
               child: SingleChildScrollView(
                 child: Column(
@@ -184,46 +188,104 @@ class _StartPageState extends State<StartPage> {
                     SizedBox(height: 10),
                     Icon(FontAwesomeIcons.fingerprint, color: Colors.teal, size: 80,),
                     SizedBox(height: 10),
-                    Text("Fingerprint Ignition", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.teal,),),
+                    Text("Fingerprint Switch", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.teal,),),
                     SizedBox(height: 5),
                     Text("© VinStudios", style: TextStyle(fontSize: 16),),
                     SizedBox(height: 30,),
-                    TextField(
-                      controller: ipController,
-                      onChanged: (v){
-                        setState(() {
-                          ipError = v.trim().isNotEmpty ?  !Utils.validIpAddress(v) : true;
-                        });
-                        print(ipError);
-                      },
-                      decoration: InputDecoration(
-                          hintText: "Device IP address",
-                          isDense: true,
-                          contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-                          prefixIcon: Icon(FontAwesomeIcons.globeAsia, size: 18,),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: ipController.text.isEmpty ? Colors.grey : ipError ? Colors.red : Colors.teal),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            enabled: connected || connecting ? false : true,
+                            controller: ipController,
+                            onChanged: (v){
+                              setState(() => ipError = v.trim().isNotEmpty ?  !Utils.validIpAddress(v) : true);
+                            },
+                            style: TextStyle(color: connected ? Colors.grey : Colors.black),
+                            decoration: InputDecoration(
+                                hintText: "Device IP address",
+                                isDense: true,
+                                contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                                prefixIcon: Icon(FontAwesomeIcons.globeAsia, size: 18, color: connecting ? Colors.grey.shade300 : connected ? Colors.green : ipController.text.isEmpty ? Colors.grey : ipError ? Colors.red : Colors.teal),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: BorderSide(color: ipController.text.isEmpty ? Colors.grey : ipError ? Colors.red : Colors.teal),
+                                ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(color: ipController.text.isEmpty ? Colors.grey : ipError ? Colors.red : Colors.teal),
+                              ),
+                              disabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(5),
+                                borderSide: BorderSide(color: connected ? Colors.green : Colors.grey.shade300),
+                              ),
+                            ),
                           ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: ipController.text.isEmpty ? Colors.grey : ipError ? Colors.red : Colors.teal),
                         ),
-                      ),
+                        Visibility(
+                          visible: connected ? true : false,
+                          child: Row(
+                            children: [
+                              SizedBox(width: 5),
+                              Material(
+                                color: Colors.teal,
+                                borderRadius: BorderRadius.circular(5),
+                                child: InkWell(
+                                  child: Container(
+                                    height: 47,
+                                    width: 47,
+                                    alignment: Alignment.center,
+                                    child: Icon(FontAwesomeIcons.times, color: Colors.white, size: 20,),
+                                  ),
+                                  onTap: (){
+                                    channel.sink.close();
+                                    stream?.cancel();
+                                    setState(() {
+                                      error = "Disconnected";
+                                      connected = false;
+                                    });
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    SizedBox(height: 20),
+                    SizedBox(height: 15),
                     TextField(
+                      enabled: connecting ? false : true,
                       onChanged: (v) => setState(() => pass = v),
-                      obscureText: true,
+                      obscureText: isObscure,
                       decoration: InputDecoration(
                           hintText: "Admin password",
                           isDense: true,
                           contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-                          prefixIcon: Icon(FontAwesomeIcons.lock, size: 18,),
-                          border: OutlineInputBorder(
+                          prefixIcon: Icon(FontAwesomeIcons.lock, size: 18, color: connecting ? Colors.grey.shade300 : pass.isNotEmpty ? Colors.teal : Colors.grey,),
+                        focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: Colors.grey),
-                          )
+                            borderSide: BorderSide(color: pass.isNotEmpty ? Colors.teal : Colors.grey, width: 1),
+                          ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: pass.isNotEmpty ? Colors.teal : Colors.grey, width: 1),
+                        ),
+                        disabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+                        ),
+                        suffixIcon: //pass.isEmpty ? null :
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            customBorder: CircleBorder(),
+                            child: Icon(FontAwesomeIcons.solidEye, size: 18, color: isObscure ? Colors.grey : Colors.teal,),
+                            onTap: (){
+                              setState(() => isObscure = !isObscure);
+                              print("eye");
+                            },
+                          ),
+                        ),
                       ),
                     ),
                     if(error != null)
@@ -233,12 +295,40 @@ class _StartPageState extends State<StartPage> {
                           Text(error, textAlign: TextAlign.center, style: TextStyle(color: Colors.red),)
                         ],
                       ),
-                    SizedBox(height: 20),
-                    login ? CircularProgressIndicator() :
+                    SizedBox(height: 25),
+                    connecting || logging ? Column(
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 20),
+                        Visibility(
+                          visible: loadForever,
+                          child: Material(
+                            color: Colors.teal,
+                            borderRadius: BorderRadius.circular(5),
+                            child: InkWell(
+                              child: Container(
+                                height: 40,
+                                width: 130,
+                                alignment: Alignment.center,
+                                child: Text("Retry", style: TextStyle(color: Colors.white, fontSize: 16),),
+                              ),
+                              onTap: (){
+                                stream?.cancel();
+                                setState(() {
+                                  error = null;
+                                  connecting = false;
+                                  loadForever = false;
+                                });
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    ) :
                     Column(
                       children: [
                         Material(
-                          color: pass.isNotEmpty ? Colors.teal : Colors.grey,
+                          color: pass.isNotEmpty && !ipError ? Colors.teal : Colors.grey,
                           borderRadius: BorderRadius.circular(8),
                           child: InkWell(
                             child: Container(
@@ -253,15 +343,14 @@ class _StartPageState extends State<StartPage> {
                                 ],
                               ),
                             ),
-                            onTap: pass.isEmpty ? null : () {
-                              setState((){
-                                login = true;
-
-                                error = null;
-                              });
-                              token = Uuid().v4();
-                              print(token);
-                              channel.sink.add("login=$pass?$token");
+                            onTap: pass.isEmpty && !ipError ? null : (){
+                              if (connected) {
+                                setState(() => logging = true);
+                                token = Uuid().v4();
+                                channel.sink.add("login=$pass?$token");
+                              } else {
+                                connect();
+                              }
                             },
                           ),
                         ),
