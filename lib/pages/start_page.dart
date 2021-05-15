@@ -43,6 +43,7 @@ class _StartPageState extends State<StartPage> {
       if (t.tick >= timeout) {
         t.cancel();
         timer.cancel();
+        print("Timer timeout");
         setState(() {
           error = "This is taking too long.\nPlease change device ip and try again.";
           loadForever = true;
@@ -128,7 +129,8 @@ class _StartPageState extends State<StartPage> {
 
     }, onDone: (){
       stream?.cancel();
-      print("Stream done!");
+      timer?.cancel();
+      print("onDone");
       setState(() {
         error = "Device ip address is not available";
         connecting = false;
@@ -138,6 +140,8 @@ class _StartPageState extends State<StartPage> {
 
     }, onError: (e) async {
       stream?.cancel();
+      timer?.cancel();
+      print("onError");
       print(e.toString());
       setState(() {
         error = e.toString();
@@ -296,7 +300,8 @@ class _StartPageState extends State<StartPage> {
                         ],
                       ),
                     SizedBox(height: 25),
-                    connecting || logging ? Column(
+                    connecting || logging ?
+                    Column(
                       children: [
                         CircularProgressIndicator(),
                         SizedBox(height: 20),

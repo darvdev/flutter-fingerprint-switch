@@ -261,156 +261,158 @@ class _DashboardPageState extends State<DashboardPage> {
           ],
         ),
         drawer: Drawer(
-          child: Column(
-            children: [
-              Container(
-                height: 180,
-                color: Colors.teal,
-                alignment: Alignment.center,
-                child: SafeArea(child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(FontAwesomeIcons.fingerprint, color: Colors.white, size: 50,),
-                    SizedBox(height: 10),
-                    Text("Fingerprint Switch", style: TextStyle(color: Colors.white, fontSize: 18),),
-                    SizedBox(height: 5),
-                    Text("© VinStudios", style: TextStyle(color: Colors.white, fontSize: 12),),
-                  ],
-                )),
-              ),
-              Material(
-                child: InkWell(
-                  child: Container(
-                    height: 50,
-                    padding: EdgeInsets.symmetric(horizontal: 30),
-                    alignment: Alignment.centerLeft,
-                    child: Row(
-                      children: [
-                        Expanded(child: Text("Dashboard", style: TextStyle(fontSize: 16, color: pageIndex == 0 ? Colors.teal : Colors.black, fontWeight: pageIndex == 0 ? FontWeight.bold : FontWeight.normal),)),
-                        SizedBox(width: 10),
-                        Icon(FontAwesomeIcons.thLarge, color: Colors.teal, size: 18,),
-                      ],
-                    ),
-                  ),
-                  onTap: pageIndex == 0 ? null : (){
-                    Navigator.pop(context);
-                    setState(() {
-                      pageIndex = 0;
-                    });
-                  },
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                Container(
+                  height: 200,
+                  color: Colors.teal,
+                  alignment: Alignment.center,
+                  child: SafeArea(child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(FontAwesomeIcons.fingerprint, color: Colors.white, size: 50,),
+                      SizedBox(height: 10),
+                      Text("Fingerprint Switch", style: TextStyle(color: Colors.white, fontSize: 18),),
+                      SizedBox(height: 5),
+                      Text("© VinStudios", style: TextStyle(color: Colors.white, fontSize: 12),),
+                    ],
+                  )),
                 ),
-              ),
-              Material(
-                child: InkWell(
-                  child: Container(
-                    height: 50,
-                    padding: EdgeInsets.symmetric(horizontal: 30),
-                    alignment: Alignment.centerLeft,
-                    child: Row(
-                      children: [
-                        Expanded(child: Text("Sensor information", style: TextStyle(fontSize: 16, color: isSensorAvailable ? pageIndex == 1 ? Colors.teal : Colors.black : Colors.grey.shade400, fontWeight: pageIndex == 1 ? FontWeight.bold : FontWeight.normal),)),
-                        SizedBox(width: 10),
-                        Icon(FontAwesomeIcons.infoCircle, color: isSensorAvailable ? Colors.teal : Colors.grey.shade400, size: 18,),
-                      ],
+                Material(
+                  child: InkWell(
+                    child: Container(
+                      height: 50,
+                      padding: EdgeInsets.symmetric(horizontal: 30),
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        children: [
+                          Expanded(child: Text("Dashboard", style: TextStyle(fontSize: 16, color: pageIndex == 0 ? Colors.teal : Colors.black, fontWeight: pageIndex == 0 ? FontWeight.bold : FontWeight.normal),)),
+                          SizedBox(width: 10),
+                          Icon(FontAwesomeIcons.thLarge, color: Colors.teal, size: 18,),
+                        ],
+                      ),
                     ),
+                    onTap: pageIndex == 0 ? null : (){
+                      Navigator.pop(context);
+                      setState(() {
+                        pageIndex = 0;
+                      });
+                    },
                   ),
-                  onTap: !isSensorAvailable || pageIndex == 1 ? null : (){
-                    Navigator.pop(context);
-                    setState(() {
-                      sensorInfoRequested = false;
-                      sensor = SensorModel();
-                      indexes = [];
-                      pageIndex = 1;
-                    });
-                    channel.sink.add("sensor=info");
-                  },
                 ),
-              ),
-              Material(
-                child: InkWell(
-                  child: Container(
-                    height: 50,
-                    padding: EdgeInsets.symmetric(horizontal: 30),
-                    alignment: Alignment.centerLeft,
-                    child: Row(
-                      children: [
-                        Expanded(child: Text("Fingerprints", style: TextStyle(fontSize: 16, color: isSensorAvailable ? pageIndex == 2 ? Colors.teal : Colors.black : Colors.grey.shade400, fontWeight: pageIndex == 2 ? FontWeight.bold : FontWeight.normal),)),
-                        SizedBox(width: 10),
-                        Icon(FontAwesomeIcons.fingerprint, color: isSensorAvailable ? Colors.teal : Colors.grey.shade400, size: 18,),
-                      ],
+                Material(
+                  child: InkWell(
+                    child: Container(
+                      height: 50,
+                      padding: EdgeInsets.symmetric(horizontal: 30),
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        children: [
+                          Expanded(child: Text("Sensor information", style: TextStyle(fontSize: 16, color: isSensorAvailable ? pageIndex == 1 ? Colors.teal : Colors.black : Colors.grey.shade400, fontWeight: pageIndex == 1 ? FontWeight.bold : FontWeight.normal),)),
+                          SizedBox(width: 10),
+                          Icon(FontAwesomeIcons.infoCircle, color: isSensorAvailable ? Colors.teal : Colors.grey.shade400, size: 18,),
+                        ],
+                      ),
                     ),
+                    onTap: !isSensorAvailable || pageIndex == 1 ? null : (){
+                      Navigator.pop(context);
+                      setState(() {
+                        sensorInfoRequested = false;
+                        sensor = SensorModel();
+                        indexes = [];
+                        pageIndex = 1;
+                      });
+                      channel.sink.add("sensor=info");
+                    },
                   ),
-                  onTap: !isSensorAvailable || pageIndex == 2 ? null : (){
-                    Navigator.pop(context);
-                    setState(() {
-                      fingerprintsRequested = false;
-                      fingerprints.clear();
-                      pageIndex = 2;
-                    });
-                    channel.sink.add("sensor=download");
-                  },
                 ),
-              ),
-              Material(
-                child: InkWell(
-                  child: Container(
-                    height: 50,
-                    padding: EdgeInsets.symmetric(horizontal: 30),
-                    alignment: Alignment.centerLeft,
-                    child: Row(
-                      children: [
-                        Expanded(child: Text("App settings", style: TextStyle(fontSize: 16),)),
-                        SizedBox(width: 10),
-                        Icon(FontAwesomeIcons.cog, color: Colors.teal, size: 18,),
-                      ],
+                Material(
+                  child: InkWell(
+                    child: Container(
+                      height: 50,
+                      padding: EdgeInsets.symmetric(horizontal: 30),
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        children: [
+                          Expanded(child: Text("Fingerprints", style: TextStyle(fontSize: 16, color: isSensorAvailable ? pageIndex == 2 ? Colors.teal : Colors.black : Colors.grey.shade400, fontWeight: pageIndex == 2 ? FontWeight.bold : FontWeight.normal),)),
+                          SizedBox(width: 10),
+                          Icon(FontAwesomeIcons.fingerprint, color: isSensorAvailable ? Colors.teal : Colors.grey.shade400, size: 18,),
+                        ],
+                      ),
                     ),
+                    onTap: !isSensorAvailable || pageIndex == 2 ? null : (){
+                      Navigator.pop(context);
+                      setState(() {
+                        fingerprintsRequested = false;
+                        fingerprints.clear();
+                        pageIndex = 2;
+                      });
+                      channel.sink.add("sensor=download");
+                    },
                   ),
-                  onTap: (){
+                ),
+                Material(
+                  child: InkWell(
+                    child: Container(
+                      height: 50,
+                      padding: EdgeInsets.symmetric(horizontal: 30),
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        children: [
+                          Expanded(child: Text("App settings", style: TextStyle(fontSize: 16),)),
+                          SizedBox(width: 10),
+                          Icon(FontAwesomeIcons.cog, color: Colors.teal, size: 18,),
+                        ],
+                      ),
+                    ),
+                    onTap: (){
 
-                  },
-                ),
-              ),
-              Material(
-                child: InkWell(
-                  child: Container(
-                    height: 50,
-                    padding: EdgeInsets.symmetric(horizontal: 30),
-                    alignment: Alignment.centerLeft,
-                    child: Row(
-                      children: [
-                        Expanded(child: Text("Device settings", style: TextStyle(fontSize: 16),)),
-                        SizedBox(width: 10),
-                        Icon(FontAwesomeIcons.cogs, color: Colors.teal, size: 18,),
-                      ],
-                    ),
+                    },
                   ),
-                  onTap: (){
+                ),
+                Material(
+                  child: InkWell(
+                    child: Container(
+                      height: 50,
+                      padding: EdgeInsets.symmetric(horizontal: 30),
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        children: [
+                          Expanded(child: Text("Device settings", style: TextStyle(fontSize: 16),)),
+                          SizedBox(width: 10),
+                          Icon(FontAwesomeIcons.cogs, color: Colors.teal, size: 18,),
+                        ],
+                      ),
+                    ),
+                    onTap: (){
 
-                  },
-                ),
-              ),
-              Material(
-                child: InkWell(
-                  child: Container(
-                    height: 60,
-                    padding: EdgeInsets.symmetric(horizontal: 30),
-                    alignment: Alignment.centerLeft,
-                    child: Row(
-                      children: [
-                        Expanded(child: Text("Logout", style: TextStyle(fontSize: 16),)),
-                        SizedBox(width: 10),
-                        Icon(FontAwesomeIcons.signOutAlt, color: Colors.teal, size: 18,),
-                      ],
-                    ),
+                    },
                   ),
-                  onTap: () async {
-                    // channel.sink.add("esp=restart");
-                    Navigator.pop(context);
-                    showLogoutDialog();
-                  },
                 ),
-              ),
-            ],
+                Material(
+                  child: InkWell(
+                    child: Container(
+                      height: 50,
+                      padding: EdgeInsets.symmetric(horizontal: 30),
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        children: [
+                          Expanded(child: Text("Logout", style: TextStyle(fontSize: 16),)),
+                          SizedBox(width: 10),
+                          Icon(FontAwesomeIcons.signOutAlt, color: Colors.teal, size: 18,),
+                        ],
+                      ),
+                    ),
+                    onTap: () async {
+                      // channel.sink.add("esp=restart");
+                      Navigator.pop(context);
+                      showLogoutDialog();
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         body: SizedBox.expand(
