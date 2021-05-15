@@ -149,7 +149,7 @@ class _StartPageState extends State<StartPage> {
         logging = false;
         loadForever = false;
       });
-    });
+    },);
   }
 
   void initialize() async {
@@ -160,9 +160,9 @@ class _StartPageState extends State<StartPage> {
     if (ip != null) {
       ipController.text = ip;
       setState(() => ipError = !Utils.validIpAddress(ipController.text));
-      if (widget.connect && !ipError) {
-        connect();
-      }
+      // if (widget.connect && !ipError) {
+      //   connect();
+      // }
     }
 
     print(ip);
