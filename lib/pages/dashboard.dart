@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:fingerprint/models/device_model.dart';
 import 'package:fingerprint/models/fingerprint_model.dart';
 import 'package:fingerprint/models/sensor_model.dart';
+import 'package:fingerprint/pages/device_settings_page.dart';
 import 'package:fingerprint/pages/fingerprints_page.dart';
 import 'package:fingerprint/pages/start_page.dart';
 import 'package:flutter/cupertino.dart';
@@ -25,9 +26,16 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
 
+  _DashboardPageState() {
+    indexes = List.generate(151, (index) => index).toList();
+    indexes.remove(0);
+    // indexes.insert(indexes.length, indexes.length + 1);
+  }
+
   IOWebSocketChannel channel;
   GlobalKey<ScaffoldState> _scaffold = GlobalKey<ScaffoldState>();
   String fingerprintId;
+
   int pageIndex = 0;
   List<int> indexes = [];
 
@@ -45,21 +53,20 @@ class _DashboardPageState extends State<DashboardPage> {
   bool enrolling = false;
   bool enrollBegin = false;
   bool enrollError = false;
-  String enrollMessage;
-  Function enrollState;
-  BuildContext enrollContext;
+  // String enrollMessage;
 
   bool deleting = false;
   bool deleteError = false;
-  String deleteMessage;
-  Function deleteState;
-  BuildContext deleteContext;
+
+
+  Function dialogState;
+  BuildContext dialogContext;
+  String dialogMessage;
 
   bool changing = false;
   bool changed = false;
-  String changeError;
-  Function changeState;
-  BuildContext changeContext;
+  // String changeError;
+
 
   SensorModel sensor = SensorModel();
   DeviceModel device = DeviceModel();
@@ -87,9 +94,9 @@ class _DashboardPageState extends State<DashboardPage> {
 
       case "info":
         sensor = SensorModel.fromJSON(data);
-        indexes = List.generate(int.parse(sensor.capacity), (index) => index).toList();
-        indexes.remove(0);
-        indexes.insert(indexes.length, indexes.length + 1);
+        // indexes = List.generate(int.parse(sensor.capacity), (index) => index).toList();
+        // indexes.remove(0);
+        // indexes.insert(indexes.length, indexes.length + 1);
         setState(() => sensorInfoRequested = true);
         break;
 
@@ -109,13 +116,13 @@ class _DashboardPageState extends State<DashboardPage> {
 
       case "enroll":
         if (data == "enrolling") {
-          enrollState(() {
+          dialogState(() {
             enrolling = true;
             enrollBegin = false;
           });
         } else if (data == "done") {
-          enrollState(() {
-            enrollMessage = "Fingerprint enrolled successfully.\nRefresh the page to get latest data";
+          dialogState(() {
+            dialogMessage = "Fingerprint enrolled successfully.\nRefresh the page to get latest data";
             enrolling = false;
           });
           setState(() {
@@ -123,10 +130,10 @@ class _DashboardPageState extends State<DashboardPage> {
             // fingerprintId = null;
           });
         } else if (data == "cancel") {
-          if (enrollContext != null) Navigator.pop(enrollContext);
+          if (dialogContext != null) Navigator.pop(dialogContext);
         } else {
-          enrollState(() {
-            enrollMessage = data;
+          dialogState(() {
+            dialogMessage = data;
             enrollError = false;
           });
         }
@@ -134,8 +141,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
       case "delete":
         if (data == "deleted") {
-          Navigator.pop(deleteContext);
-          showDeleteSuccessDialog("Fingerprint $fingerprintId deleted successfully");
+          Navigator.pop(dialogContext);
+          showSuccessDialog("Fingerprint $fingerprintId deleted successfully");
           int index = fingerprints.indexWhere((f) => f.id == fingerprintId);
           fingerprintId = null;
           if (index != -1) {
@@ -146,6 +153,12 @@ class _DashboardPageState extends State<DashboardPage> {
 
         }
         break;
+
+      case "delete-all":
+        if (dialogContext != null) Navigator.pop(dialogContext);
+        showSuccessDialog(data);
+        break;
+
       default:
         break;
     }
@@ -155,9 +168,9 @@ class _DashboardPageState extends State<DashboardPage> {
   void handleSensorError(String message, dynamic data) {
     switch (message) {
       case "enroll":
-        if (enrollState != null) {
-          enrollState((){
-            enrollMessage = data;
+        if (dialogState != null) {
+          dialogState((){
+            dialogContext = data;
             enrollError = true;
             enrolling = false;
             enrollBegin = false;
@@ -165,14 +178,20 @@ class _DashboardPageState extends State<DashboardPage> {
         }
         break;
       case "delete":
-        if (deleteState != null) {
-          deleteState((){
-            deleteMessage = data;
+        if (dialogState != null) {
+          dialogState((){
+            dialogState = data;
             deleteError = true;
             deleting = false;
           });
         }
         break;
+
+      case "delete-all":
+        if (dialogContext != null) Navigator.pop(dialogContext);
+        showErrorDialog(data);
+        break;
+
       default:
         break;
     }
@@ -205,11 +224,16 @@ class _DashboardPageState extends State<DashboardPage> {
 
       case "set":
         if (data == "done") {
-          if (changeContext != null) Navigator.pop(changeContext);
-          changeError = null;
+          if (dialogContext != null) Navigator.pop(dialogContext);
+          dialogMessage = null;
           changing = false;
-          showChangeSuccessDialog();
+          showSuccessDialog("Your changes is save.\nRestart the device to take effect.");
         }
+        break;
+
+      case "restart":
+        if (dialogContext != null) Navigator.pop(dialogContext);
+        // showSuccessDialog("Device is rebooted please recconnect to device");
         break;
     }
 
@@ -218,8 +242,8 @@ class _DashboardPageState extends State<DashboardPage> {
   void handleEspError(String message, dynamic data) {
     switch (message) {
       case "set":
-        changeState(() {
-          changeError = data;
+        dialogState(() {
+          dialogMessage = data;
         });
         break;
     }
@@ -245,6 +269,17 @@ class _DashboardPageState extends State<DashboardPage> {
             break;
           case "esp":
             handleEspSuccess(message, data);
+            break;
+          case "login":
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                backgroundColor: message == "grant" ? Colors.green.withOpacity(0.75) : message == "denied" ? Colors.red.withOpacity(0.75) : Colors.black.withOpacity(0.75),
+                content: Text(data, textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold),),
+                behavior: SnackBarBehavior.floating,
+                margin: EdgeInsets.fromLTRB(30, 0, 30, 30),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
+              ),
+            );
             break;
         }
       } else {
@@ -596,6 +631,13 @@ class _DashboardPageState extends State<DashboardPage> {
       return SensorPage(sensor,
         isSensorAvailable: isSensorAvailable,
         sensorInfoRequested: sensorInfoRequested,
+        callback: (){
+        showActionDialog(
+          title: "Clear All Fingerprints",
+          request: "sensor=delete-all",
+          button: "Delete All"
+        );
+        },
       );
 
     } else if (pageIndex == 2) {
@@ -604,838 +646,57 @@ class _DashboardPageState extends State<DashboardPage> {
         callback: (String id) => showDeleteDialog(id),
       );
     } else if (pageIndex == 3) {
-      return deviceSettingsPage();
+      return DeviceSettingsPage(
+        deviceInfoRequested: deviceInfoRequested,
+        device: device,
+        callback: (String action){
+          if (action == "pass") {
+            showChangePasswordDialog();
+          } else if (action == "ap") {
+            showChangeWifiDialog(
+              title: "Change Access Point",
+              ssid: device.apSsid,
+              pass: device.apPass,
+              ssidPath: "ap-ssid",
+              passPath: "ap-pass",
+            );
+          } else if (action == "wifi") {
+            showChangeWifiDialog(
+              title: "Change Wifi",
+              ssid: device.wifiSsid,
+              pass: device.wifiPass,
+              ssidPath: "wifi-ssid",
+              passPath: "wifi-pass",
+            );
+          } else if (action == "reset") {
+            showActionDialog(
+              title: "Reboot Device",
+              request: "esp=restart",
+              button: "Reboot",
+            );
+          }
+        },
+      );
     }
 
     return Container();
 
   }
 
-  Widget deviceSettingsPage() {
-
-    if (!deviceInfoRequested) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 20),
-            Text("Getting device information...", style: TextStyle(color: Colors.grey.shade600, fontSize: 16),),
-          ],
-        ),
-      );
-    }
-
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          Material(
-            color: Colors.white,
-            child: InkWell(
-              child: Container(
-                height: 50,
-                padding: EdgeInsets.symmetric(horizontal: 30),
-                // alignment: Alignment.centerLeft,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text("Version", style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
-                    Text(device.version, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),),
-                  ],
-                ),
-              ),
-              onTap: (){},
-            ),
-          ),
-          Divider(height: 1),
-          Material(
-            color: Colors.white,
-            child: InkWell(
-              child: Container(
-                height: 50,
-                padding: EdgeInsets.symmetric(horizontal: 30),
-                // alignment: Alignment.centerLeft,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text("Device Password", style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
-                    Text(device.pass, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),),
-                  ],
-                ),
-              ),
-              onTap: (){
-                showDialog(
-                  barrierDismissible: false,
-                  context: context,
-                  builder: (context){
-                    changeContext = context;
-                    String pass = "";
-
-                    return StatefulBuilder(
-                      builder: (context, setState1){
-                        changeState = setState1;
-                        return Dialog(
-                          insetPadding: EdgeInsets.symmetric(horizontal: 20),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          child: Padding(
-                            padding: EdgeInsets.all(20),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text("Change Admin Password", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
-                                SizedBox(height: 20),
-                                TextField(
-                                  onChanged: (v){
-                                    setState1(() {
-                                      pass = v;
-                                    });
-                                  },
-                                  enabled: changing ? false : true,
-                                  decoration: InputDecoration(
-                                    hintText: "Password",
-                                    isDense: true,
-                                    contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(5),
-                                      borderSide: BorderSide(color: Colors.grey),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(5),
-                                      borderSide: BorderSide(color: Colors.grey),
-                                    ),
-                                    disabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(5),
-                                      borderSide: BorderSide(color: Colors.grey),
-                                    ),
-                                  ),
-                                ),
-                                if (changeError != null)
-                                Column(
-                                  children: [
-                                    SizedBox(height: 10),
-                                    Text(changeError, textAlign: TextAlign.center, style: TextStyle(color: Colors.red),),
-                                  ],
-                                ),
-                                SizedBox(height: 30),
-                                changing ? CircularProgressIndicator() :
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Material(
-                                        color: Colors.grey.shade300,
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: InkWell(
-                                          child: Container(
-                                            height: 50,
-                                            alignment: Alignment.center,
-                                            child: Text("Cancel", style: TextStyle(fontSize: 18, color:  Colors.black, fontWeight: FontWeight.bold),),
-                                          ),
-                                          onTap: () => Navigator.pop(context),
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(width: 10),
-                                    Expanded(
-                                      child: Material(
-                                        color: pass.isEmpty ? Colors.grey : Colors.teal,
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: InkWell(
-                                          child: Container(
-                                            height: 50,
-                                            alignment: Alignment.center,
-                                            child: Text("Change", style: TextStyle(fontSize: 18, color:  Colors.white, fontWeight: FontWeight.bold),),
-                                          ),
-                                          onTap: pass.isEmpty ? null : () async {
-                                            dynamic result = await showDialog(
-                                              context: context,
-                                              builder: (context) {
-                                                return AlertDialog(
-                                                  content: Text("Are you sure?"),
-                                                  actions: [
-                                                    TextButton(child: Text("No"), onPressed: () => Navigator.pop(context),),
-                                                    TextButton(child: Text("Yes"), onPressed: () => Navigator.pop(context, true),),
-                                                  ],
-                                                );
-                                              },
-                                            );
-
-                                            if (result == true) {
-                                              setState1(() {
-                                                changing = true;
-                                              });
-                                              channel.sink.add("esp=set?pass=$pass");
-                                            }
-
-                                          },
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-          Divider(height: 1),
-          Material(
-            color: Colors.white,
-            child: InkWell(
-              child: Container(
-                height: 50,
-                padding: EdgeInsets.symmetric(horizontal: 30),
-                // alignment: Alignment.centerLeft,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text("Battery Level", style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
-                    Text("59%", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),),
-                  ],
-                ),
-              ),
-              onTap: (){},
-            ),
-          ),
-          Divider(height: 1),
-          Material(
-            color: Colors.white,
-            child: InkWell(
-              child: Container(
-                height: 50,
-                padding: EdgeInsets.symmetric(horizontal: 30),
-                // alignment: Alignment.centerLeft,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text("Mac Address", style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
-                    Text(device.macAddress, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),),
-                  ],
-                ),
-              ),
-              onTap: (){},
-            ),
-          ),
-          SizedBox(height: 15),
-
-          Material(
-            color: Colors.white,
-            child: Column(
-              children: [
-                SizedBox(height: 10),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text("Access Point", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.teal),),
-                          Material(
-                            color: Colors.white,
-                            child: InkWell(
-                              customBorder: CircleBorder(),
-                              child: Container(
-                                height: 50,
-                                width: 50,
-                                alignment: Alignment.center,
-                                child: Icon(FontAwesomeIcons.edit, color: Colors.teal, size: 16,),
-                              ),
-                              onTap: (){
-                                showDialog(
-                                  barrierDismissible: false,
-                                  context: context,
-                                  builder: (context){
-                                    changeContext = context;
-                                    TextEditingController ssidController = TextEditingController(text: device.apSsid);
-                                    TextEditingController passController = TextEditingController(text: device.apPass);
-                                    bool valid = true;
-
-                                    return StatefulBuilder(
-                                      builder: (context, setState1){
-                                        changeState = setState1;
-                                        return Dialog(
-                                          insetPadding: EdgeInsets.symmetric(horizontal: 20),
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                          child: Padding(
-                                            padding: EdgeInsets.all(20),
-                                            child: Column(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Text("Change Access Point", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
-                                                SizedBox(height: 20),
-                                                TextField(
-                                                  onChanged: (_){
-                                                    setState1(() {
-                                                      valid = ssidController.text.isEmpty ? false : true;
-                                                    });
-                                                  },
-                                                  controller: ssidController,
-                                                  enabled: changing ? false : true,
-                                                  decoration: InputDecoration(
-                                                    isDense: true,
-                                                    floatingLabelBehavior: FloatingLabelBehavior.always,
-                                                    labelText: "SSID",
-                                                    contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                                                    focusedBorder: OutlineInputBorder(
-                                                      borderRadius: BorderRadius.circular(5),
-                                                      borderSide: BorderSide(color: Colors.grey),
-                                                    ),
-                                                    enabledBorder: OutlineInputBorder(
-                                                      borderRadius: BorderRadius.circular(5),
-                                                      borderSide: BorderSide(color: Colors.grey),
-                                                    ),
-                                                    disabledBorder: OutlineInputBorder(
-                                                      borderRadius: BorderRadius.circular(5),
-                                                      borderSide: BorderSide(color: Colors.grey),
-                                                    ),
-                                                  ),
-                                                ),
-                                                SizedBox(height: 10),
-                                                TextField(
-                                                  onChanged: (_){
-                                                    setState1(() {
-                                                      valid = passController.text.isEmpty ? true : passController.text.length < 8 ? false : true;
-                                                    });
-                                                  },
-                                                  controller: passController,
-                                                  enabled: changing ? false : true,
-                                                  decoration: InputDecoration(
-                                                    isDense: true,
-                                                    floatingLabelBehavior: FloatingLabelBehavior.always,
-                                                    labelText: "Password",
-                                                    contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                                                    focusedBorder: OutlineInputBorder(
-                                                      borderRadius: BorderRadius.circular(5),
-                                                      borderSide: BorderSide(color: Colors.grey),
-                                                    ),
-                                                    enabledBorder: OutlineInputBorder(
-                                                      borderRadius: BorderRadius.circular(5),
-                                                      borderSide: BorderSide(color: Colors.grey),
-                                                    ),
-                                                    disabledBorder: OutlineInputBorder(
-                                                      borderRadius: BorderRadius.circular(5),
-                                                      borderSide: BorderSide(color: Colors.grey),
-                                                    ),
-                                                  ),
-                                                ),
-                                                if (changeError != null)
-                                                  Column(
-                                                    children: [
-                                                      SizedBox(height: 10),
-                                                      Text(changeError, textAlign: TextAlign.center, style: TextStyle(color: Colors.red),),
-                                                    ],
-                                                  ),
-                                                SizedBox(height: 30),
-                                                changing ? CircularProgressIndicator() :
-                                                Row(
-                                                  children: [
-                                                    Expanded(
-                                                      child: Material(
-                                                        color: Colors.grey.shade300,
-                                                        borderRadius: BorderRadius.circular(8),
-                                                        child: InkWell(
-                                                          child: Container(
-                                                            height: 50,
-                                                            alignment: Alignment.center,
-                                                            child: Text("Cancel", style: TextStyle(fontSize: 18, color:  Colors.black, fontWeight: FontWeight.bold),),
-                                                          ),
-                                                          onTap: () => Navigator.pop(context),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    SizedBox(width: 10),
-                                                    Expanded(
-                                                      child: Material(
-                                                        color: !valid ? Colors.grey : Colors.teal,
-                                                        borderRadius: BorderRadius.circular(8),
-                                                        child: InkWell(
-                                                          child: Container(
-                                                            height: 50,
-                                                            alignment: Alignment.center,
-                                                            child: Text("Change", style: TextStyle(fontSize: 18, color:  Colors.white, fontWeight: FontWeight.bold),),
-                                                          ),
-                                                          onTap: !valid ? null : () async {
-                                                            dynamic result = await showDialog(
-                                                              context: context,
-                                                              builder: (context) {
-                                                                return AlertDialog(
-                                                                  content: Text("Are you sure?"),
-                                                                  actions: [
-                                                                    TextButton(child: Text("No"), onPressed: () => Navigator.pop(context),),
-                                                                    TextButton(child: Text("Yes"), onPressed: () => Navigator.pop(context, true),),
-                                                                  ],
-                                                                );
-                                                              },
-                                                            );
-
-                                                            if (result == true) {
-                                                              setState1(() {
-                                                                changing = true;
-                                                              });
-                                                              channel.sink.add("esp=set?ap-ssid=${ssidController.text}");
-                                                              channel.sink.add("esp=set?ap-pass=${passController.text}");
-                                                            }
-
-                                                          },
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    );
-                                  },
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                      Divider(height: 1, thickness: 1.5,),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.only(left: 5),
-                  child: Column(
-                    children: [
-                      Container(
-                        height: 40,
-                        padding: EdgeInsets.symmetric(horizontal: 30),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text("SSID", style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
-                            Text(device.apSsid, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        height: 40,
-                        padding: EdgeInsets.symmetric(horizontal: 30),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text("Password", style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
-                            Text(device.apPass, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        height: 40,
-                        padding: EdgeInsets.symmetric(horizontal: 30),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text("IP Address", style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
-                            Text(device.apIp, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 10),
-              ],
-            ),
-          ),
-
-          SizedBox(height: 15),
-
-          Material(
-            color: Colors.white,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(height: 10),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text("Wifi Status", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.teal),),
-                          Material(
-                            color: Colors.white,
-                            child: InkWell(
-                              customBorder: CircleBorder(),
-                              child: Container(
-                                height: 50,
-                                width: 50,
-                                alignment: Alignment.center,
-                                child: Icon(FontAwesomeIcons.edit, color: Colors.teal, size: 16,),
-                              ),
-                              onTap: (){
-                                showDialog(
-                                  barrierDismissible: false,
-                                  context: context,
-                                  builder: (context){
-                                    changeContext = context;
-                                    TextEditingController ssidController = TextEditingController(text: device.wifiSsid);
-                                    TextEditingController passController = TextEditingController(text: device.wifiPass);
-                                    bool valid = true;
-
-                                    return StatefulBuilder(
-                                      builder: (context, setState1){
-                                        changeState = setState1;
-                                        return Dialog(
-                                          insetPadding: EdgeInsets.symmetric(horizontal: 20),
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                          child: Padding(
-                                            padding: EdgeInsets.all(20),
-                                            child: Column(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Text("Change Wifi", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
-                                                SizedBox(height: 20),
-                                                TextField(
-                                                  onChanged: (_){
-                                                    setState1(() {
-                                                      valid = ssidController.text.isEmpty ? false : true;
-                                                    });
-                                                  },
-                                                  controller: ssidController,
-                                                  enabled: changing ? false : true,
-                                                  decoration: InputDecoration(
-                                                    isDense: true,
-                                                    floatingLabelBehavior: FloatingLabelBehavior.always,
-                                                    labelText: "SSID",
-                                                    contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                                                    focusedBorder: OutlineInputBorder(
-                                                      borderRadius: BorderRadius.circular(5),
-                                                      borderSide: BorderSide(color: Colors.grey),
-                                                    ),
-                                                    enabledBorder: OutlineInputBorder(
-                                                      borderRadius: BorderRadius.circular(5),
-                                                      borderSide: BorderSide(color: Colors.grey),
-                                                    ),
-                                                    disabledBorder: OutlineInputBorder(
-                                                      borderRadius: BorderRadius.circular(5),
-                                                      borderSide: BorderSide(color: Colors.grey),
-                                                    ),
-                                                  ),
-                                                ),
-                                                SizedBox(height: 10),
-                                                TextField(
-                                                  onChanged: (_){
-                                                    setState1(() {
-                                                      valid = passController.text.isEmpty ? true : passController.text.length < 8 ? false : true;
-                                                    });
-                                                  },
-                                                  controller: passController,
-                                                  enabled: changing ? false : true,
-                                                  decoration: InputDecoration(
-                                                    isDense: true,
-                                                    floatingLabelBehavior: FloatingLabelBehavior.always,
-                                                    labelText: "Password",
-                                                    contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                                                    focusedBorder: OutlineInputBorder(
-                                                      borderRadius: BorderRadius.circular(5),
-                                                      borderSide: BorderSide(color: Colors.grey),
-                                                    ),
-                                                    enabledBorder: OutlineInputBorder(
-                                                      borderRadius: BorderRadius.circular(5),
-                                                      borderSide: BorderSide(color: Colors.grey),
-                                                    ),
-                                                    disabledBorder: OutlineInputBorder(
-                                                      borderRadius: BorderRadius.circular(5),
-                                                      borderSide: BorderSide(color: Colors.grey),
-                                                    ),
-                                                  ),
-                                                ),
-                                                if (changeError != null)
-                                                  Column(
-                                                    children: [
-                                                      SizedBox(height: 10),
-                                                      Text(changeError, textAlign: TextAlign.center, style: TextStyle(color: Colors.red),),
-                                                    ],
-                                                  ),
-                                                SizedBox(height: 30),
-                                                changing ? CircularProgressIndicator() :
-                                                Row(
-                                                  children: [
-                                                    Expanded(
-                                                      child: Material(
-                                                        color: Colors.grey.shade300,
-                                                        borderRadius: BorderRadius.circular(8),
-                                                        child: InkWell(
-                                                          child: Container(
-                                                            height: 50,
-                                                            alignment: Alignment.center,
-                                                            child: Text("Cancel", style: TextStyle(fontSize: 18, color:  Colors.black, fontWeight: FontWeight.bold),),
-                                                          ),
-                                                          onTap: () => Navigator.pop(context),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    SizedBox(width: 10),
-                                                    Expanded(
-                                                      child: Material(
-                                                        color: !valid ? Colors.grey : Colors.teal,
-                                                        borderRadius: BorderRadius.circular(8),
-                                                        child: InkWell(
-                                                          child: Container(
-                                                            height: 50,
-                                                            alignment: Alignment.center,
-                                                            child: Text("Change", style: TextStyle(fontSize: 18, color:  Colors.white, fontWeight: FontWeight.bold),),
-                                                          ),
-                                                          onTap: !valid ? null : () async {
-                                                            dynamic result = await showDialog(
-                                                              context: context,
-                                                              builder: (context) {
-                                                                return AlertDialog(
-                                                                  content: Text("Are you sure?"),
-                                                                  actions: [
-                                                                    TextButton(child: Text("No"), onPressed: () => Navigator.pop(context),),
-                                                                    TextButton(child: Text("Yes"), onPressed: () => Navigator.pop(context, true),),
-                                                                  ],
-                                                                );
-                                                              },
-                                                            );
-
-                                                            if (result == true) {
-                                                              setState1(() {
-                                                                changing = true;
-                                                              });
-                                                              channel.sink.add("esp=set?wifi-ssid=${ssidController.text}");
-                                                              channel.sink.add("esp=set?wifi-pass=${passController.text}");
-                                                            }
-
-                                                          },
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    );
-                                  },
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                      Divider(height: 1, thickness: 1.5,),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.only(left: 5),
-                  child: Column(
-                    children: [
-                      SizedBox(height: 5),
-                      Container(
-                        height: 40,
-                        padding: EdgeInsets.symmetric(horizontal: 30),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text("SSID", style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
-                            Text(device.wifiSsid, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        height: 40,
-                        padding: EdgeInsets.symmetric(horizontal: 30),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text("Password", style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
-                            Text(device.wifiPass, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        height: 40,
-                        padding: EdgeInsets.symmetric(horizontal: 30),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text("IP Address", style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
-                            Text(device.wifiIp, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        height: 40,
-                        padding: EdgeInsets.symmetric(horizontal: 30),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text("Gateway", style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
-                            Text(device.gatewayIp, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        height: 40,
-                        padding: EdgeInsets.symmetric(horizontal: 30),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text("Subnet Mask", style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
-                            Text(device.subnetMask, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        height: 40,
-                        padding: EdgeInsets.symmetric(horizontal: 30),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text("Channel", style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
-                            Text(device.channel, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        height: 40,
-                        padding: EdgeInsets.symmetric(horizontal: 30),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text("State", style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
-                            Text(device.state, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 10),
-              ],
-            ),
-          ),
-          SizedBox(height: 15),
-          Material(
-            color: Colors.white,
-            child: InkWell(
-              child: Container(
-                height: 50,
-                padding: EdgeInsets.symmetric(horizontal: 30),
-                alignment: Alignment.center,
-                child: Text("Reboot Device", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.teal),),
-              ),
-              onTap: (){
-
-                showDialog(
-                  context: context,
-                  builder: (context){
-                    bool resetting = false;
-                    return StatefulBuilder(
-                      builder: (context, setState1){
-                        return Dialog(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          child: Padding(
-                            padding: EdgeInsets.all(20),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text("Reboot Device", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),),
-                                SizedBox(height: 30),
-                                resetting ? CircularProgressIndicator() :
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Material(
-                                        color: Colors.grey.shade300,
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: InkWell(
-                                          child: Container(
-                                            height: 50,
-                                            alignment: Alignment.center,
-                                            child: Text("Cancel", style: TextStyle(fontSize: 18, color:  Colors.black, fontWeight: FontWeight.bold),),
-                                          ),
-                                          onTap: () => Navigator.pop(context),
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(width: 10),
-                                    Expanded(
-                                      child: Material(
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide(color: Colors.teal, width: 2)),
-                                        child: InkWell(
-                                          child: Container(
-                                            height: 50,
-                                            alignment: Alignment.center,
-                                            child: Text("Reboot", style: TextStyle(fontSize: 18, color:  Colors.teal, fontWeight: FontWeight.bold),),
-                                          ),
-                                          onTap: resetting ? null : () {
-                                            setState1((){
-                                              resetting = true;
-                                            });
-                                            channel.sink.add("esp=restart");
-                                          },
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                );
-
-              },
-            ),
-          ),
-          Divider(height: 1),
-          Material(
-            color: Colors.white,
-            child: InkWell(
-              child: Container(
-                height: 50,
-                padding: EdgeInsets.symmetric(horizontal: 30),
-                alignment: Alignment.center,
-                child: Text("Factory Reset", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.teal),),
-              ),
-              onTap: (){},
-            ),
-          ),
-          SizedBox(height: 20),
-        ],
-      ),
-    );
-
-  }
-
-
   void showEnrollDialog() async {
     await showDialog(
       barrierDismissible: false,
       context: context,
       builder: (context){
-        enrollContext = context;
+        dialogContext = context;
         fingerprintId = "1";
-
+        print(indexes);
         return WillPopScope(
           onWillPop: () async => false,
           child: StatefulBuilder(
             builder: (context, setState1){
 
-              enrollState = setState1;
+              dialogState = setState1;
 
               return Dialog(
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -1485,11 +746,11 @@ class _DashboardPageState extends State<DashboardPage> {
                           onTap: (){},
                         ),
                       ),
-                      if (enrollMessage != null)
+                      if (dialogMessage != null)
                         Column(
                           children: [
                             SizedBox(height: 20),
-                            Text(enrollMessage, textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: enrollError ? Colors.red : Colors.black),),
+                            Text(dialogMessage, textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: enrollError ? Colors.red : Colors.black),),
                           ],
                         ),
                       SizedBox(height: 30),
@@ -1515,7 +776,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                   } else {
                                     setState1(() {
                                       enrollBegin = false;
-                                      enrollMessage = null;
+                                      dialogMessage = null;
                                       enrolling = false;
                                     });
                                     Navigator.pop(context);
@@ -1537,7 +798,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                 ),
                                 onTap: enrolling ? null : () {
                                   setState1(() {
-                                    enrollMessage = null;
+                                    dialogMessage = null;
                                     enrollBegin = true;
                                   });
                                   channel.sink.add("sensor=enroll?$fingerprintId");
@@ -1559,8 +820,8 @@ class _DashboardPageState extends State<DashboardPage> {
     enrollBegin = false;
     enrolling = false;
     enrollError = false;
-    enrollMessage = null;
-    enrollContext = null;
+    dialogMessage = null;
+    dialogContext = null;
     fingerprintId = null;
   }
 
@@ -1569,14 +830,14 @@ class _DashboardPageState extends State<DashboardPage> {
     await showDialog(
       context: context,
       builder: (context){
-        deleteContext = context;
-        deleteMessage = "Do you really want to delete fingerprint $id?";
+        dialogContext = context;
+        dialogMessage = "Do you really want to delete fingerprint $id?";
 
         return WillPopScope(
           onWillPop: () async => true,
           child: StatefulBuilder(
             builder: (context, setState1){
-              deleteState = setState1;
+              dialogState = setState1;
               return Dialog(
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 child: Padding(
@@ -1586,7 +847,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     children: [
                       Text("DELETE FINGERPRINT", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),),
                       SizedBox(height: 10),
-                      Text(deleteMessage, textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: deleteError ? Colors.red : Colors.grey.shade700),),
+                      Text(dialogMessage, textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: deleteError ? Colors.red : Colors.grey.shade700),),
                       SizedBox(height: 30),
                       deleting ? CircularProgressIndicator() :
                       Row(
@@ -1637,44 +898,9 @@ class _DashboardPageState extends State<DashboardPage> {
     );
     deleteError = false;
     deleting = false;
-    deleteMessage = null;
-    deleteContext = null;
+    dialogMessage = null;
+    dialogContext = null;
     // deleteFingerprintId = null;
-  }
-
-  void showDeleteSuccessDialog(String message) {
-    showDialog(
-      context: context,
-      builder: (context){
-        return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          child: Padding(
-            padding: EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(FontAwesomeIcons.checkCircle, color: Colors.green, size: 60,),
-                SizedBox(height: 15),
-                Text(message, textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
-                SizedBox(height: 30),
-                Material(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide(width: 2, color: Colors.grey.shade700)),
-                  child: InkWell(
-                    child: Container(
-                      height: 50,
-                      width: 150,
-                      alignment: Alignment.center,
-                      child: Text("OK", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.grey.shade700),),
-                    ),
-                    onTap: () => Navigator.pop(context),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
   }
 
   void showStateDialog({@required String title, @required String button, @required String query, @required Color color}) {
@@ -1756,7 +982,278 @@ class _DashboardPageState extends State<DashboardPage> {
 
   }
 
-  void showChangeSuccessDialog() {
+  void showChangePasswordDialog() {
+    showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (context){
+        dialogContext = context;
+        String pass = "";
+
+        return StatefulBuilder(
+          builder: (context, setState1){
+            dialogState = setState1;
+            return Dialog(
+              insetPadding: EdgeInsets.symmetric(horizontal: 20),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              child: Padding(
+                padding: EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text("Change Admin Password", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
+                    SizedBox(height: 20),
+                    TextField(
+                      onChanged: (v){
+                        setState1(() {
+                          pass = v;
+                        });
+                      },
+                      enabled: changing ? false : true,
+                      decoration: InputDecoration(
+                        hintText: "Password",
+                        isDense: true,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5),
+                          borderSide: BorderSide(color: Colors.grey),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5),
+                          borderSide: BorderSide(color: Colors.grey),
+                        ),
+                        disabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5),
+                          borderSide: BorderSide(color: Colors.grey),
+                        ),
+                      ),
+                    ),
+                    if (dialogMessage != null)
+                      Column(
+                        children: [
+                          SizedBox(height: 10),
+                          Text(dialogMessage, textAlign: TextAlign.center, style: TextStyle(color: Colors.red),),
+                        ],
+                      ),
+                    SizedBox(height: 30),
+                    changing ? CircularProgressIndicator() :
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Material(
+                            color: Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(8),
+                            child: InkWell(
+                              child: Container(
+                                height: 50,
+                                alignment: Alignment.center,
+                                child: Text("Cancel", style: TextStyle(fontSize: 18, color:  Colors.black, fontWeight: FontWeight.bold),),
+                              ),
+                              onTap: () => Navigator.pop(context),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Material(
+                            color: pass.trim().isEmpty ? Colors.grey : Colors.teal,
+                            borderRadius: BorderRadius.circular(8),
+                            child: InkWell(
+                              child: Container(
+                                height: 50,
+                                alignment: Alignment.center,
+                                child: Text("Change", style: TextStyle(fontSize: 18, color:  Colors.white, fontWeight: FontWeight.bold),),
+                              ),
+                              onTap: pass.trim().isEmpty ? null : () async {
+                                dynamic result = await showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return AlertDialog(
+                                      content: Text("Are you sure?"),
+                                      actions: [
+                                        TextButton(child: Text("No"), onPressed: () => Navigator.pop(context),),
+                                        TextButton(child: Text("Yes"), onPressed: () => Navigator.pop(context, true),),
+                                      ],
+                                    );
+                                  },
+                                );
+
+                                if (result == true) {
+                                  setState1(() {
+                                    changing = true;
+                                  });
+                                  channel.sink.add("esp=set?pass=$pass");
+                                }
+
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void showChangeWifiDialog({@required String title, String ssid, String pass, String ssidPath, String passPath}) {
+    showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (context){
+        dialogContext = context;
+        TextEditingController ssidController = TextEditingController(text: ssid);
+        TextEditingController passController = TextEditingController(text: pass);
+        bool valid = true;
+
+        return StatefulBuilder(
+          builder: (context, setState1){
+            dialogState = setState1;
+            return Dialog(
+              insetPadding: EdgeInsets.symmetric(horizontal: 20),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              child: Padding(
+                padding: EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
+                    SizedBox(height: 20),
+                    TextField(
+                      onChanged: (_){
+                        setState1(() {
+                          valid = ssidController.text.isEmpty ? false : true;
+                        });
+                      },
+                      controller: ssidController,
+                      enabled: changing ? false : true,
+                      decoration: InputDecoration(
+                        isDense: true,
+                        floatingLabelBehavior: FloatingLabelBehavior.always,
+                        labelText: "SSID",
+                        contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5),
+                          borderSide: BorderSide(color: Colors.grey),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5),
+                          borderSide: BorderSide(color: Colors.grey),
+                        ),
+                        disabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5),
+                          borderSide: BorderSide(color: Colors.grey),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    TextField(
+                      onChanged: (_){
+                        setState1(() {
+                          valid = passController.text.isEmpty ? true : passController.text.length < 8 ? false : true;
+                        });
+                      },
+                      controller: passController,
+                      enabled: changing ? false : true,
+                      decoration: InputDecoration(
+                        isDense: true,
+                        floatingLabelBehavior: FloatingLabelBehavior.always,
+                        labelText: "Password",
+                        contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5),
+                          borderSide: BorderSide(color: Colors.grey),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5),
+                          borderSide: BorderSide(color: Colors.grey),
+                        ),
+                        disabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5),
+                          borderSide: BorderSide(color: Colors.grey),
+                        ),
+                      ),
+                    ),
+                    if (dialogMessage != null)
+                      Column(
+                        children: [
+                          SizedBox(height: 10),
+                          Text(dialogMessage, textAlign: TextAlign.center, style: TextStyle(color: Colors.red),),
+                        ],
+                      ),
+                    SizedBox(height: 30),
+                    changing ? CircularProgressIndicator() :
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Material(
+                            color: Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(8),
+                            child: InkWell(
+                              child: Container(
+                                height: 50,
+                                alignment: Alignment.center,
+                                child: Text("Cancel", style: TextStyle(fontSize: 18, color:  Colors.black, fontWeight: FontWeight.bold),),
+                              ),
+                              onTap: () => Navigator.pop(context),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Material(
+                            color: !valid ? Colors.grey : Colors.teal,
+                            borderRadius: BorderRadius.circular(8),
+                            child: InkWell(
+                              child: Container(
+                                height: 50,
+                                alignment: Alignment.center,
+                                child: Text("Change", style: TextStyle(fontSize: 18, color:  Colors.white, fontWeight: FontWeight.bold),),
+                              ),
+                              onTap: !valid ? null : () async {
+                                dynamic result = await showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return AlertDialog(
+                                      content: Text("Are you sure?"),
+                                      actions: [
+                                        TextButton(child: Text("No"), onPressed: () => Navigator.pop(context),),
+                                        TextButton(child: Text("Yes"), onPressed: () => Navigator.pop(context, true),),
+                                      ],
+                                    );
+                                  },
+                                );
+
+                                if (result == true) {
+                                  setState1(() {
+                                    changing = true;
+                                  });
+                                  channel.sink.add("esp=set?$ssidPath=${ssidController.text}");
+                                  channel.sink.add("esp=set?$passPath=${passController.text}");
+                                }
+
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void showSuccessDialog(String message) {
     showDialog(
       context: context,
       builder: (context){
@@ -1769,7 +1266,7 @@ class _DashboardPageState extends State<DashboardPage> {
               children: [
                 Icon(FontAwesomeIcons.checkCircle, color: Colors.green, size: 60,),
                 SizedBox(height: 15),
-                Text("Your changes is save.\nRestart the device to take effect.", textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
+                Text(message, textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
                 SizedBox(height: 30),
                 Material(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide(width: 2, color: Colors.grey.shade700)),
@@ -1790,4 +1287,106 @@ class _DashboardPageState extends State<DashboardPage> {
       },
     );
   }
+
+  void showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context){
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          child: Padding(
+            padding: EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(FontAwesomeIcons.times, color: Colors.green, size: 60,),
+                SizedBox(height: 15),
+                Text(message, textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
+                SizedBox(height: 30),
+                Material(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide(width: 2, color: Colors.grey.shade700)),
+                  child: InkWell(
+                    child: Container(
+                      height: 50,
+                      width: 150,
+                      alignment: Alignment.center,
+                      child: Text("OK", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.grey.shade700),),
+                    ),
+                    onTap: () => Navigator.pop(context),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void showActionDialog({String title, String request, String button}) {
+    showDialog(
+      context: context,
+      builder: (context){
+        bool resetting = false;
+        dialogContext = context;
+
+        return StatefulBuilder(
+          builder: (context, setState1){
+            return Dialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              child: Padding(
+                padding: EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),),
+                    SizedBox(height: 30),
+                    resetting ? CircularProgressIndicator() :
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Material(
+                            color: Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(8),
+                            child: InkWell(
+                              child: Container(
+                                height: 50,
+                                alignment: Alignment.center,
+                                child: Text("Cancel", style: TextStyle(fontSize: 18, color:  Colors.black, fontWeight: FontWeight.bold),),
+                              ),
+                              onTap: () => Navigator.pop(context),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Material(
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide(color: Colors.teal, width: 2)),
+                            child: InkWell(
+                              child: Container(
+                                height: 50,
+                                alignment: Alignment.center,
+                                child: Text(button, style: TextStyle(fontSize: 18, color:  Colors.teal, fontWeight: FontWeight.bold),),
+                              ),
+                              onTap: resetting ? null : () {
+                                setState1((){
+                                  resetting = true;
+                                });
+                                channel.sink.add(request);
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
 }
