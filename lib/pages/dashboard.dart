@@ -415,7 +415,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   setState(() {
                     sensorInfoRequested = false;
                     sensor = SensorModel();
-                    indexes = [];
+                    // indexes = [];
                     pageIndex = 1;
                   });
                   channel.sink.add("sensor=info");
