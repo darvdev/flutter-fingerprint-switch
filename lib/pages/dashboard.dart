@@ -170,7 +170,7 @@ class _DashboardPageState extends State<DashboardPage> {
       case "enroll":
         if (dialogState != null) {
           dialogState((){
-            dialogContext = data;
+            dialogMessage = data;
             enrollError = true;
             enrolling = false;
             enrollBegin = false;
@@ -202,7 +202,7 @@ class _DashboardPageState extends State<DashboardPage> {
     switch (message) {
       case "state":
         setState(() {
-          switchState = data == "1" ? true : false;
+          switchState = data == "1" ? false : true;
           relayStateRequested = true;
         });
         print(switchState);
@@ -271,6 +271,8 @@ class _DashboardPageState extends State<DashboardPage> {
             handleEspSuccess(message, data);
             break;
           case "login":
+            ScaffoldMessenger.of(context).removeCurrentSnackBar();
+
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 backgroundColor: message == "grant" ? Colors.green.withOpacity(0.75) : message == "denied" ? Colors.red.withOpacity(0.75) : Colors.black.withOpacity(0.75),
@@ -322,6 +324,11 @@ class _DashboardPageState extends State<DashboardPage> {
 
     return WillPopScope(
       onWillPop: () async{
+
+        if (pageIndex != 0) {
+          setState(() => pageIndex = 0);
+          return false;
+        }
         showLogoutDialog();
         return false;
       },
@@ -388,8 +395,9 @@ class _DashboardPageState extends State<DashboardPage> {
                     ],
                   ),
                 ),
-                onTap: pageIndex == 0 ? null : (){
+                onTap: pageIndex == 0 ? null : () async {
                   Navigator.pop(context);
+                  await Future.delayed(Duration(milliseconds: 500));
                   setState(() {
                     pageIndex = 0;
                   });
@@ -410,8 +418,9 @@ class _DashboardPageState extends State<DashboardPage> {
                     ],
                   ),
                 ),
-                onTap: !isSensorAvailable || pageIndex == 1 ? null : (){
+                onTap: !isSensorAvailable || pageIndex == 1 ? null : () async {
                   Navigator.pop(context);
+                  await Future.delayed(Duration(milliseconds: 500));
                   setState(() {
                     sensorInfoRequested = false;
                     sensor = SensorModel();
@@ -436,8 +445,9 @@ class _DashboardPageState extends State<DashboardPage> {
                     ],
                   ),
                 ),
-                onTap: !isSensorAvailable || pageIndex == 2 ? null : (){
+                onTap: !isSensorAvailable || pageIndex == 2 ? null : () async {
                   Navigator.pop(context);
+                  await Future.delayed(Duration(milliseconds: 500));
                   setState(() {
                     fingerprintsRequested = false;
                     fingerprints.clear();
@@ -461,8 +471,9 @@ class _DashboardPageState extends State<DashboardPage> {
                     ],
                   ),
                 ),
-                onTap: pageIndex == 3 ? null : (){
+                onTap: pageIndex == 3 ? null : () async {
                   Navigator.pop(context);
+                  await Future.delayed(Duration(milliseconds: 500));
                   setState(() {
                     deviceInfoRequested = false;
                     pageIndex = 3;
@@ -569,7 +580,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         showStateDialog(
                           title: "Switch ${switchState ? "OFF" : "ON"}?",
                           button: switchState ? "OFF" : "ON",
-                          query: "relay=state?${switchState ? "0" : "1"}",
+                          query: "relay=state?${switchState ? "1" : "0"}",
                           color: Colors.indigo,
                         );
                       },
