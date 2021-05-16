@@ -55,6 +55,12 @@ class _StartPageState extends State<StartPage> {
 
       if (sensorRequesting) {
         channel.sink.add("sensor=state");
+      } else {
+        if (pass.isNotEmpty) {
+          setState(() => logging = true);
+          token = Uuid().v4();
+          channel.sink.add("login=$pass?$token");
+        }
       }
 
       setState(() {
@@ -333,7 +339,7 @@ class _StartPageState extends State<StartPage> {
                             ],
                           ),
                         SizedBox(height: 25),
-                        logging ?
+                        connecting || logging ?
                         Column(
                           children: [
                             CircularProgressIndicator(),
