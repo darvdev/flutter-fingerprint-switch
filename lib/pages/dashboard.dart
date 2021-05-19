@@ -662,7 +662,11 @@ class _DashboardPageState extends State<DashboardPage> {
         device: device,
         callback: (String action){
           if (action == "pass") {
-            showChangePasswordDialog();
+            showChangeDialog(
+              title: "Change Admin Password",
+              hintText: "Password",
+              request: "pass",
+            );
           } else if (action == "ap") {
             showChangeWifiDialog(
               title: "Change Access Point",
@@ -684,6 +688,20 @@ class _DashboardPageState extends State<DashboardPage> {
               title: "Reboot Device",
               request: "esp=restart",
               button: "Reboot",
+            );
+          } else if (action == "confidence") {
+            showChangeDialog(
+              title: "Change Fingerprint Confidence",
+              hintText: "Number between 1000 to 5000",
+              request: "confidence",
+              number: true,
+            );
+          } else if (action == "engine") {
+            showChangeDialog(
+              title: "Change Engine Start",
+              hintText: "Number between 1000 to 5000",
+              request: "engine",
+              number: true,
             );
           }
         },
@@ -993,13 +1011,13 @@ class _DashboardPageState extends State<DashboardPage> {
 
   }
 
-  void showChangePasswordDialog() {
+  void showChangeDialog({String title, String hintText, String request, bool number = false}) {
     showDialog(
       barrierDismissible: false,
       context: context,
       builder: (context){
         dialogContext = context;
-        String pass = "";
+        String text = "";
 
         return StatefulBuilder(
           builder: (context, setState1){
@@ -1012,17 +1030,18 @@ class _DashboardPageState extends State<DashboardPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text("Change Admin Password", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
+                    Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
                     SizedBox(height: 20),
                     TextField(
                       onChanged: (v){
                         setState1(() {
-                          pass = v;
+                          text = v;
                         });
                       },
                       enabled: changing ? false : true,
+                      keyboardType: number ? TextInputType.number : TextInputType.text,
                       decoration: InputDecoration(
-                        hintText: "Password",
+                        hintText: hintText,
                         isDense: true,
                         contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                         focusedBorder: OutlineInputBorder(
@@ -1067,7 +1086,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         SizedBox(width: 10),
                         Expanded(
                           child: Material(
-                            color: pass.trim().isEmpty ? Colors.grey : Colors.teal,
+                            color: text.trim().isEmpty ? Colors.grey : Colors.teal,
                             borderRadius: BorderRadius.circular(8),
                             child: InkWell(
                               child: Container(
@@ -1075,7 +1094,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                 alignment: Alignment.center,
                                 child: Text("Change", style: TextStyle(fontSize: 18, color:  Colors.white, fontWeight: FontWeight.bold),),
                               ),
-                              onTap: pass.trim().isEmpty ? null : () async {
+                              onTap: text.trim().isEmpty ? null : () async {
                                 dynamic result = await showDialog(
                                   context: context,
                                   builder: (context) {
@@ -1093,7 +1112,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                   setState1(() {
                                     changing = true;
                                   });
-                                  channel.sink.add("esp=set?pass=$pass");
+                                  channel.sink.add("esp=set?$request=$text");
                                 }
 
                               },

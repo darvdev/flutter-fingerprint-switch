@@ -78,15 +78,58 @@ class DeviceSettingsPage extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text("Battery Level", style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
-                    Text("59%", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),),
+                    Text("Fingerprint confidence", style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
+                    Text(device.confidence, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),),
                   ],
                 ),
               ),
-              onTap: (){},
+              onTap: (){
+                callback("confidence");
+              },
             ),
           ),
           Divider(height: 1),
+          Material(
+            color: Colors.white,
+            child: InkWell(
+              child: Container(
+                height: 50,
+                padding: EdgeInsets.symmetric(horizontal: 30),
+                // alignment: Alignment.centerLeft,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text("Engine start", style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
+                    Text(device.engineStart, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),),
+                  ],
+                ),
+              ),
+              onTap: (){
+                callback("engine");
+              },
+            ),
+          ),
+          Divider(height: 1),
+
+          // Material(
+          //   color: Colors.white,
+          //   child: InkWell(
+          //     child: Container(
+          //       height: 50,
+          //       padding: EdgeInsets.symmetric(horizontal: 30),
+          //       // alignment: Alignment.centerLeft,
+          //       child: Row(
+          //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //         children: [
+          //           Text("Battery Level", style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
+          //           Text("59%", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),),
+          //         ],
+          //       ),
+          //     ),
+          //     onTap: (){},
+          //   ),
+          // ),
+          // Divider(height: 1),
           Material(
             color: Colors.white,
             child: InkWell(
@@ -185,131 +228,131 @@ class DeviceSettingsPage extends StatelessWidget {
             ),
           ),
           SizedBox(height: 15),
-          Material(
-            color: Colors.white,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(height: 10),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text("Wifi Status", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.teal),),
-                          Material(
-                            color: Colors.white,
-                            child: InkWell(
-                              customBorder: CircleBorder(),
-                              child: Container(
-                                height: 50,
-                                width: 50,
-                                alignment: Alignment.center,
-                                child: Icon(FontAwesomeIcons.edit, color: Colors.teal, size: 16,),
-                              ),
-                              onTap: (){
-                                callback("wifi");
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                      Divider(height: 1, thickness: 1.5,),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.only(left: 5),
-                  child: Column(
-                    children: [
-                      SizedBox(height: 5),
-                      Container(
-                        height: 40,
-                        padding: EdgeInsets.symmetric(horizontal: 30),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text("SSID", style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
-                            Text(device.wifiSsid, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        height: 40,
-                        padding: EdgeInsets.symmetric(horizontal: 30),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text("Password", style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
-                            Text(device.wifiPass, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        height: 40,
-                        padding: EdgeInsets.symmetric(horizontal: 30),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text("IP Address", style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
-                            Text(device.wifiIp, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        height: 40,
-                        padding: EdgeInsets.symmetric(horizontal: 30),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text("Gateway", style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
-                            Text(device.gatewayIp, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        height: 40,
-                        padding: EdgeInsets.symmetric(horizontal: 30),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text("Subnet Mask", style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
-                            Text(device.subnetMask, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        height: 40,
-                        padding: EdgeInsets.symmetric(horizontal: 30),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text("Channel", style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
-                            Text(device.channel, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        height: 40,
-                        padding: EdgeInsets.symmetric(horizontal: 30),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text("State", style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
-                            Text(device.state, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 10),
-              ],
-            ),
-          ),
-          SizedBox(height: 15),
+          // Material(
+          //   color: Colors.white,
+          //   child: Column(
+          //     crossAxisAlignment: CrossAxisAlignment.start,
+          //     children: [
+          //       SizedBox(height: 10),
+          //       Padding(
+          //         padding: EdgeInsets.symmetric(horizontal: 20),
+          //         child: Column(
+          //           children: [
+          //             Row(
+          //               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //               children: [
+          //                 Text("Wifi Status", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.teal),),
+          //                 Material(
+          //                   color: Colors.white,
+          //                   child: InkWell(
+          //                     customBorder: CircleBorder(),
+          //                     child: Container(
+          //                       height: 50,
+          //                       width: 50,
+          //                       alignment: Alignment.center,
+          //                       child: Icon(FontAwesomeIcons.edit, color: Colors.teal, size: 16,),
+          //                     ),
+          //                     onTap: (){
+          //                       callback("wifi");
+          //                     },
+          //                   ),
+          //                 ),
+          //               ],
+          //             ),
+          //             Divider(height: 1, thickness: 1.5,),
+          //           ],
+          //         ),
+          //       ),
+          //       Padding(
+          //         padding: EdgeInsets.only(left: 5),
+          //         child: Column(
+          //           children: [
+          //             SizedBox(height: 5),
+          //             Container(
+          //               height: 40,
+          //               padding: EdgeInsets.symmetric(horizontal: 30),
+          //               child: Row(
+          //                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //                 children: [
+          //                   Text("SSID", style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
+          //                   Text(device.wifiSsid, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),),
+          //                 ],
+          //               ),
+          //             ),
+          //             Container(
+          //               height: 40,
+          //               padding: EdgeInsets.symmetric(horizontal: 30),
+          //               child: Row(
+          //                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //                 children: [
+          //                   Text("Password", style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
+          //                   Text(device.wifiPass, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),),
+          //                 ],
+          //               ),
+          //             ),
+          //             Container(
+          //               height: 40,
+          //               padding: EdgeInsets.symmetric(horizontal: 30),
+          //               child: Row(
+          //                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //                 children: [
+          //                   Text("IP Address", style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
+          //                   Text(device.wifiIp, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),),
+          //                 ],
+          //               ),
+          //             ),
+          //             Container(
+          //               height: 40,
+          //               padding: EdgeInsets.symmetric(horizontal: 30),
+          //               child: Row(
+          //                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //                 children: [
+          //                   Text("Gateway", style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
+          //                   Text(device.gatewayIp, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),),
+          //                 ],
+          //               ),
+          //             ),
+          //             Container(
+          //               height: 40,
+          //               padding: EdgeInsets.symmetric(horizontal: 30),
+          //               child: Row(
+          //                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //                 children: [
+          //                   Text("Subnet Mask", style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
+          //                   Text(device.subnetMask, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),),
+          //                 ],
+          //               ),
+          //             ),
+          //             Container(
+          //               height: 40,
+          //               padding: EdgeInsets.symmetric(horizontal: 30),
+          //               child: Row(
+          //                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //                 children: [
+          //                   Text("Channel", style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
+          //                   Text(device.channel, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),),
+          //                 ],
+          //               ),
+          //             ),
+          //             Container(
+          //               height: 40,
+          //               padding: EdgeInsets.symmetric(horizontal: 30),
+          //               child: Row(
+          //                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //                 children: [
+          //                   Text("State", style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
+          //                   Text(device.state, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),),
+          //                 ],
+          //               ),
+          //             ),
+          //           ],
+          //         ),
+          //       ),
+          //       SizedBox(height: 10),
+          //     ],
+          //   ),
+          // ),
+          // SizedBox(height: 15),
           Material(
             color: Colors.white,
             child: InkWell(

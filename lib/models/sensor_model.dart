@@ -19,6 +19,7 @@ class SensorModel {
     String baudRate = data["baud_rate"];
     String templateCount = data["template_count"];
 
+
     return SensorModel(statusReg: statusReg, systemId: systemId, capacity: capacity, securityLevel: securityLevel, deviceAddress: deviceAddress, packetLength: packetLength, baudRate: baudRate, templateCount: templateCount);
   }
 }
