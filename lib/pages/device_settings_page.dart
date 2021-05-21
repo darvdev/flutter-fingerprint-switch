@@ -367,19 +367,19 @@ class DeviceSettingsPage extends StatelessWidget {
               },
             ),
           ),
-          Divider(height: 1),
-          Material(
-            color: Colors.white,
-            child: InkWell(
-              child: Container(
-                height: 50,
-                padding: EdgeInsets.symmetric(horizontal: 30),
-                alignment: Alignment.center,
-                child: Text("Factory Reset", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.teal),),
-              ),
-              onTap: (){},
-            ),
-          ),
+          // Divider(height: 1),
+          // Material(
+          //   color: Colors.white,
+          //   child: InkWell(
+          //     child: Container(
+          //       height: 50,
+          //       padding: EdgeInsets.symmetric(horizontal: 30),
+          //       alignment: Alignment.center,
+          //       child: Text("Factory Reset", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.teal),),
+          //     ),
+          //     onTap: (){},
+          //   ),
+          // ),
           SizedBox(height: 20),
         ],
       ),

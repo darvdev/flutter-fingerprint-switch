@@ -441,7 +441,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     children: [
                       Expanded(child: Text("Fingerprints", style: TextStyle(fontSize: 16, color: isSensorAvailable ? pageIndex == 2 ? Colors.teal : Colors.black : Colors.grey.shade400, fontWeight: pageIndex == 2 ? FontWeight.bold : FontWeight.normal),)),
                       SizedBox(width: 10),
-                      Icon(FontAwesomeIcons.fingerprint, color: isSensorAvailable ? Colors.teal : Colors.grey.shade400, size: 18,),
+                      Icon(FontAwesomeIcons.listAlt, color: isSensorAvailable ? Colors.teal : Colors.grey.shade400, size: 18,),
                     ],
                   ),
                 ),
@@ -453,7 +453,28 @@ class _DashboardPageState extends State<DashboardPage> {
                     fingerprints.clear();
                     pageIndex = 2;
                   });
-                  channel.sink.add("sensor=download");
+                  // channel.sink.add("sensor=download");
+                },
+              ),
+            ),
+            Material(
+              child: InkWell(
+                child: Container(
+                  height: 50,
+                  padding: EdgeInsets.symmetric(horizontal: 30),
+                  alignment: Alignment.centerLeft,
+                  child: Row(
+                    children: [
+                      Expanded(child: Text("Enroll fingerprint", style: TextStyle(fontSize: 16, color: isSensorAvailable ? Colors.black : Colors.grey.shade400, fontWeight: FontWeight.normal),)),
+                      SizedBox(width: 10),
+                      Icon(FontAwesomeIcons.fingerprint, color: isSensorAvailable ? Colors.teal : Colors.grey.shade400, size: 18,),
+                    ],
+                  ),
+                ),
+                onTap: isSensorAvailable ? null : () async {
+                  Navigator.pop(context);
+                  await Future.delayed(Duration(milliseconds: 250));
+                  showEnrollDialog();
                 },
               ),
             ),
@@ -482,25 +503,25 @@ class _DashboardPageState extends State<DashboardPage> {
                 },
               ),
             ),
-            Material(
-              child: InkWell(
-                child: Container(
-                  height: 50,
-                  padding: EdgeInsets.symmetric(horizontal: 30),
-                  alignment: Alignment.centerLeft,
-                  child: Row(
-                    children: [
-                      Expanded(child: Text("App settings", style: TextStyle(fontSize: 16),)),
-                      SizedBox(width: 10),
-                      Icon(FontAwesomeIcons.cog, color: Colors.teal, size: 18,),
-                    ],
-                  ),
-                ),
-                onTap: (){
-
-                },
-              ),
-            ),
+            // Material(
+            //   child: InkWell(
+            //     child: Container(
+            //       height: 50,
+            //       padding: EdgeInsets.symmetric(horizontal: 30),
+            //       alignment: Alignment.centerLeft,
+            //       child: Row(
+            //         children: [
+            //           Expanded(child: Text("App settings", style: TextStyle(fontSize: 16),)),
+            //           SizedBox(width: 10),
+            //           Icon(FontAwesomeIcons.cog, color: Colors.teal, size: 18,),
+            //         ],
+            //       ),
+            //     ),
+            //     onTap: (){
+            //
+            //     },
+            //   ),
+            // ),
             Material(
               child: InkWell(
                 child: Container(
@@ -586,50 +607,50 @@ class _DashboardPageState extends State<DashboardPage> {
                       },
                     ),
                   ),
-                  SizedBox(height: 15),
-                  Material(
-                    elevation: 3,
-                    color: engineState ? Colors.teal : Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: engineState ? BorderSide.none : BorderSide(width: 2, color: Colors.teal)),
-                    child: InkWell(
-                      child: Container(
-                        height: 56,
-                        alignment: Alignment.center,
-                        child: Text("Engine is ${engineState ? "ON" : "OFF"}", style: TextStyle(fontSize: 18, color: engineState ? Colors.white : Colors.teal, fontWeight: FontWeight.bold),),
-                      ),
-                      onTap: (){
-                        showDialog(
-                          context: context,
-                          builder: (context){
-                            return Dialog(
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                              child: Padding(
-                                padding: EdgeInsets.all(20),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text("Feature is not available at this time.", textAlign: TextAlign.center, style: TextStyle(fontSize: 18),),
-                                    SizedBox(height: 30),
-                                    Material(
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: BorderSide(color: Colors.teal, width: 2)),
-                                      child: InkWell(
-                                        child: Container(
-                                          height: 50,
-                                          alignment: Alignment.center,
-                                          child: Text("OK", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.teal, ),),
-                                        ),
-                                        onTap: () => Navigator.pop(context),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ),
+                  // SizedBox(height: 15),
+                  // Material(
+                  //   elevation: 3,
+                  //   color: engineState ? Colors.teal : Colors.white,
+                  //   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: engineState ? BorderSide.none : BorderSide(width: 2, color: Colors.teal)),
+                  //   child: InkWell(
+                  //     child: Container(
+                  //       height: 56,
+                  //       alignment: Alignment.center,
+                  //       child: Text("Engine is ${engineState ? "ON" : "OFF"}", style: TextStyle(fontSize: 18, color: engineState ? Colors.white : Colors.teal, fontWeight: FontWeight.bold),),
+                  //     ),
+                  //     onTap: (){
+                  //       showDialog(
+                  //         context: context,
+                  //         builder: (context){
+                  //           return Dialog(
+                  //             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  //             child: Padding(
+                  //               padding: EdgeInsets.all(20),
+                  //               child: Column(
+                  //                 mainAxisSize: MainAxisSize.min,
+                  //                 children: [
+                  //                   Text("Feature is not available at this time.", textAlign: TextAlign.center, style: TextStyle(fontSize: 18),),
+                  //                   SizedBox(height: 30),
+                  //                   Material(
+                  //                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: BorderSide(color: Colors.teal, width: 2)),
+                  //                     child: InkWell(
+                  //                       child: Container(
+                  //                         height: 50,
+                  //                         alignment: Alignment.center,
+                  //                         child: Text("OK", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.teal, ),),
+                  //                       ),
+                  //                       onTap: () => Navigator.pop(context),
+                  //                     ),
+                  //                   ),
+                  //                 ],
+                  //               ),
+                  //             ),
+                  //           );
+                  //         },
+                  //       );
+                  //     },
+                  //   ),
+                  // ),
                 ],
               ),
             ),

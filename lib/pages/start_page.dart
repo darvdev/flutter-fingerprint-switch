@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -194,7 +195,7 @@ class _StartPageState extends State<StartPage> {
         loadForever = false;
         sensorRequesting = false;
       });
-    },);
+    });
   }
 
   void initialize() async {
