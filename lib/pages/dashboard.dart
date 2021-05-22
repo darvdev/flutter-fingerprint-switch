@@ -453,7 +453,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     fingerprints.clear();
                     pageIndex = 2;
                   });
-                  // channel.sink.add("sensor=download");
+                  channel.sink.add("sensor=download");
                 },
               ),
             ),
@@ -471,7 +471,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     ],
                   ),
                 ),
-                onTap: isSensorAvailable ? null : () async {
+                onTap: !isSensorAvailable ? null : () async {
                   Navigator.pop(context);
                   await Future.delayed(Duration(milliseconds: 250));
                   showEnrollDialog();

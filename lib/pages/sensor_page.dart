@@ -125,7 +125,7 @@ class SensorPage extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text("Device Address", style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
-                    Text(sensor.deviceAddress, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),),
+                    Text("0x" + sensor.deviceAddress, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),),
                   ],
                 ),
               ),

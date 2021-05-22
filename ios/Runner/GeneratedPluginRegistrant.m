@@ -10,17 +10,10 @@
 @import shared_preferences;
 #endif
 
-#if __has_include(<starflut/StarflutPlugin.h>)
-#import <starflut/StarflutPlugin.h>
-#else
-@import starflut;
-#endif
-
 @implementation GeneratedPluginRegistrant
 
 + (void)registerWithRegistry:(NSObject<FlutterPluginRegistry>*)registry {
   [FLTSharedPreferencesPlugin registerWithRegistrar:[registry registrarForPlugin:@"FLTSharedPreferencesPlugin"]];
-  [StarflutPlugin registerWithRegistrar:[registry registrarForPlugin:@"StarflutPlugin"]];
 }
 
 @end
